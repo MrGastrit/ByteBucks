@@ -1,3 +1,9 @@
+import random
+
+
+words = ["долла́р", "долла́ра", "долла́ров"]
+
+
 JOBS_NAMES = {
     "courier": "🚶 Курьер",
     "cleaner": "🧹 Уборщик",
@@ -11,7 +17,22 @@ JOBS_NAMES = {
     "blogger": "📹 Видеоблогер",
 }
 
-JOB_EVENTS = {
+
+JOBS_SALARIES = {
+    "courier": 150,
+    "cleaner": 120,
+    "fastfood": 140,
+    "loader": 170,
+
+    "artist": 360,
+    "writer": 370,
+    "mechanic": 420,
+    "programmer": 750,
+    "blogger": 530,
+}
+
+
+JOBS_EVENTS = {
     "courier": [
         {"text": "⌛ Ты опоздал на заказ! Штраф составит ###{ammount} {word}###", "penalty_percent": 20},
         {"text": "🤝 Клиент дал тебе щедрые чаевые — ###+{amount} {word}###", "bonus_percent": random.randint(5, 7)},
@@ -33,6 +54,8 @@ JOB_EVENTS = {
         {"text": "🏥 Получил травму — оплатил лечение за ###{ammount} {word}###", "penalty_percent": random.randint(15, 35)},
         {"text": "🏥 Ты получил очень серьезную травму — оплатил лечение за ###{ammount} {word}###", "penalty_percent": random.randint(35, 70)},
     ],
+
+
     "artist": [
         {"text": "🎨 Продал картину — заработал ###+{amount} {word}###", "bonus_percent": random.randint(50, 1000)},
         {"text": "🖌️ Потерял кисть — купил новую за ###{ammount} {word}###", "penalty_percent": 20},
@@ -65,3 +88,38 @@ JOB_EVENTS = {
         {"text": "👎 Увеличилось число хейтеров — потерял подписчиков, убыток ###{ammount} {word}###", "penalty_percent": random.randint(40, 100)},
     ]
 }
+
+
+
+def job_event(job_name, salary):
+    if random.random() <= 0.3:
+        event = random.choice(JOBS_EVENTS.get(job_name, []))
+        if not event:
+            return salary, None
+
+        if "penalty_percent" in event:
+            change = salary * event["penalty_percent"] / 100
+            salary -= change
+        elif "bonus_percent" in event:
+            change = salary * event["bonus_percent"] / 100
+            salary += change
+        else:
+            change = 0
+
+        return salary, event["text"].format(ammount=int[change], word=plural(change, words))
+
+    else:
+        return salary, None
+
+
+
+def plural(n, forms):
+    n = abs(int(n)) % 100
+    n1 = n % 10
+    if 11 <= n <= 19:
+        return forms[2]
+    if 1 == n1:
+        return forms[0]
+    if 2 <= n1 <= 4:
+        return forms[1]
+    return forms[2]

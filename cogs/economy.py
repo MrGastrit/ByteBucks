@@ -20,41 +20,6 @@ class EconomyCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="daily", description="Ежедневная награда")
-    @app_commands.checks.has_permissions(send_messages=True)
-    async def daily(self, interaction: discord.Interaction):
-        cursor.execute("SELECT 1 FROM users WHERE id = %s", (interaction.user.id,))
-        result = cursor.fetchone()
-
-        if result:
-            row = get_daily_time(interaction.user.id)
-
-            now = datetime.now(timezone.utc)
-
-            if row is None or row[0] is None:
-                next_daily = now + timedelta(days=1)
-                set_daily_time(interaction.user.id, next_daily)
-                set_balance(interaction.user.id, get_balance(interaction.user.id) + 100)
-
-                await interaction.response.send_message(embed=discord.Embed(title="", description=f"{interaction.user.mention} получил ежедневную награду!"))
-            else:
-                next_daily = row[0]
-                if now >= next_daily:
-                    next_daily = now + timedelta(days=1)
-                    set_daily_time(interaction.user.id, next_daily)
-                    set_balance(interaction.user.id, get_balance(interaction.user.id) + 100)
-
-                    await interaction.response.send_message(embed=discord.Embed(title="", description=f"{interaction.user.mention} получил ежедневную награду!"))
-
-                else:
-                    remaining = next_daily - now
-                    await interaction.response.send_message(f"Время еще не пришло! До получения награды осталось: {str(remaining).split(".")[0]}", ephemeral=True)
-
-        else:
-            await interaction.response.send_message("У вас нет трудовой книги, вы не можете получать деньги", ephemeral=True)
-
-        conn.commit()
-
     @app_commands.command(name="shop", description="Открыть магазин")
     @app_commands.checks.has_permissions(send_messages=True)
     async def shop(self, interaction: discord.Interaction):
@@ -70,25 +35,22 @@ class EconomyCog(commands.Cog):
 
                 add_item(interaction.user.id, product)
             else:
-                await interaction.response.edit_message(
-                    content="💳 На вашем балансе недостаточно средств! Иди работай, потом приходи.", view=None)
+                await interaction.response.edit_message(content="💳 На вашем балансе недостаточно средств! Иди работай, потом приходи.", view=None)
 
         async def handle_product_selection(interaction: discord.Interaction, options, product: str):
             label = next((opt.label for opt in options if opt.value == product), product)
 
             splited = label.split(" - ")
 
-            await interaction.response.send_message(
-                f"🛒 Вы выбрали товар: {splited[0]}\nНажмите на кнопку, чтобы подтвердить оплату",
-                view=ButtonView("Подтвердить", options, product, handle_purchase_accept, discord.ButtonStyle.success),
-                ephemeral=True)
+            await interaction.response.send_message(f"🛒 Вы выбрали товар: {splited[0]}\nНажмите на кнопку, чтобы подтвердить оплату", view=ButtonView("Подтвердить", options, product, handle_purchase_accept, discord.ButtonStyle.success), ephemeral=True)
 
         async def handle_selection(interaction: discord.Interaction, options, selected: str):
             if selected == "electronics":
                 embed = discord.Embed(description="## Категория - __💻 Электроника__", color=discord.Color.dark_teal())
                 options = [
                     SelectOption(label="🎥 Камера - 15999", value="camera"),
-                    SelectOption(label="💻 Ноутбук - 24499", value="laptop"),
+                    SelectOption(label="💻 Ноутбук ASAS - 49500", value="laptop"),
+                    SelectOption(label="💻 Macback Air M4 Pro - 119000", value="laptop"),
                     SelectOption(label="📱 Смартфон - 11999", value="phone"),
                     SelectOption(label="🪫 Повербанк - 2199", value="powerbank"),
                 ]
@@ -129,8 +91,7 @@ class EconomyCog(commands.Cog):
                 await interaction.response.edit_message(embed=embed, view=DropdownView("Выбрать товар", options, handle_product_selection))
 
             elif selected == "fun":
-                embed = discord.Embed(description="## Категория - __🎮 Развлечения__",
-                                      color=discord.Color.dark_teal())
+                embed = discord.Embed(description="## Категория - __🎮 Развлечения__", color=discord.Color.dark_teal())
                 options = [
                     SelectOption(label="🎮 Игровая консоль - 52500", value="console"),
                     SelectOption(label="🃏 Игральные карты - 229", value="cards"),
@@ -146,8 +107,7 @@ class EconomyCog(commands.Cog):
                 ]
                 await interaction.response.edit_message(embed=embed, view=DropdownView("Выбрать товар", options, handle_product_selection))
 
-        embed = discord.Embed(title="Магазин", description="Здесь вы можете купить всё, что вам нужно (почти всё)",
-                              color=discord.Color.dark_teal())
+        embed = discord.Embed(title="Магазин", description="Здесь вы можете купить всё, что вам нужно (почти всё)", color=discord.Color.dark_teal())
         options = [
             SelectOption(label="💻 Электроника", value="electronics"),
             SelectOption(label="🚴 Спорттовары", value="sports"),
